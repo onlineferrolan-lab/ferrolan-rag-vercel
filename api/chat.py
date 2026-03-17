@@ -14,21 +14,13 @@ from http.server import BaseHTTPRequestHandler
 
 import requests as http_requests
 from anthropic import Anthropic
-from pinecone import Pinecone
 
 # ── Configuracion ──────────────────────────────────────────
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
 PINECONE_HOST = "https://ferrolan-rag-qtvdakx.svc.aped-4627-b74a.pinecone.io"
+PINECONE_INFERENCE_URL = "https://api.pinecone.io/embed"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 PRESTASHOP_API_KEY = os.environ.get("PRESTASHOP_API_KEY", "")
-
-# Inicializar cliente Pinecone (singleton)
-_pc_client = None
-def _get_pc():
-    global _pc_client
-    if _pc_client is None:
-        _pc_client = Pinecone(api_key=PINECONE_API_KEY)
-    return _pc_client
 
 SHOP_URL = "https://ferrolan.es"
 API_BASE = f"{SHOP_URL}/api"
@@ -136,16 +128,26 @@ def route_query(query):
     return selected[:3]
 
 
-# ── Embeddings via Pinecone SDK ───────────────────────────
+# ── Embeddings via Pinecone Inference REST API ────────────
 def get_embedding(text):
-    """Genera embedding usando Pinecone Inference SDK (multilingual-e5-large, 1024 dims)."""
-    pc = _get_pc()
-    result = pc.inference.embed(
-        model="multilingual-e5-large",
-        inputs=[text],
-        parameters={"input_type": "query"},
+    """Genera embedding usando Pinecone Inference REST (multilingual-e5-large, 1024 dims)."""
+    response = http_requests.post(
+        PINECONE_INFERENCE_URL,
+        headers={
+            "Api-Key": PINECONE_API_KEY,
+            "Content-Type": "application/json",
+            "X-Pinecone-Api-Version": "2025-10",
+        },
+        json={
+            "model": "multilingual-e5-large",
+            "inputs": [{"text": text}],
+            "parameters": {"input_type": "query"},
+        },
+        timeout=15,
     )
-    return result.data[0].values
+    if response.status_code != 200:
+        raise Exception(f"Pinecone Inference error {response.status_code}: {response.text[:200]}")
+    return response.json()["data"][0]["values"]
 
 
 # ── Pinecone search ───────────────────────────────────────
