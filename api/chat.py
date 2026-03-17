@@ -232,13 +232,87 @@ STOP_WORDS = [
     "teneis", "tenéis", "quiero", "busco", "necesito", "recomiendas",
     "hay", "tienen", "venden", "me", "un", "una", "de", "para", "con",
     "que", "el", "la", "los", "las", "en", "del", "al", "por", "como",
+    "cuales", "cuáles", "mejor", "mejores", "recomendacion", "estilo",
 ]
 
 PRODUCT_SEARCH_KEYWORDS = [
     "teneis", "tenéis", "tienen", "hay", "venden", "busco", "quiero",
     "comprar", "precio", "catalogo", "catálogo", "disponible", "stock",
     "referencia", "serie", "coleccion", "colección", "modelo", "recomiendas",
+    "recomienda", "recomendacion", "sugieres", "opciones",
 ]
+
+# Mapeo de palabras del usuario -> feature_value IDs en PrestaShop
+# Feature 86 = Efecto, 99 = Efecto Filtro, 100 = Estilo Filtro
+# Feature 26 = Zona de Uso, 20 = Tipo Producto, 4 = Color
+FEATURE_MAP = {
+    # Efectos (feature 99 - Efecto Filtro)
+    "cemento":     {"feature_id": 99, "value_ids": [4467]},
+    "marmol":      {"feature_id": 99, "value_ids": [4465]},
+    "mármol":      {"feature_id": 99, "value_ids": [4465]},
+    "piedra":      {"feature_id": 99, "value_ids": [4413]},
+    "madera":      {"feature_id": 99, "value_ids": [4471]},
+    "hidraulico":  {"feature_id": 99, "value_ids": [4468]},
+    "hidráulico":  {"feature_id": 99, "value_ids": [4468]},
+    "terrazo":     {"feature_id": 99, "value_ids": [4477]},
+    "monocolor":   {"feature_id": 99, "value_ids": [4469]},
+    "barro":       {"feature_id": 99, "value_ids": [4473]},
+    "oxido":       {"feature_id": 99, "value_ids": [4476]},
+    "óxido":       {"feature_id": 99, "value_ids": [4476]},
+    "textil":      {"feature_id": 99, "value_ids": [4474]},
+    "ladrillo":    {"feature_id": 99, "value_ids": [4470]},
+    "botanico":    {"feature_id": 99, "value_ids": [4475]},
+    # Estilos (feature 100 - Estilo Filtro)
+    "nordico":     {"feature_id": 100, "value_ids": [4463]},
+    "nórdico":     {"feature_id": 100, "value_ids": [4463]},
+    "industrial":  {"feature_id": 100, "value_ids": [4472]},
+    "vintage":     {"feature_id": 100, "value_ids": [4464]},
+    "clasico":     {"feature_id": 100, "value_ids": [4460]},
+    "clásico":     {"feature_id": 100, "value_ids": [4460]},
+    "contemporaneo": {"feature_id": 100, "value_ids": [4461]},
+    "contemporáneo": {"feature_id": 100, "value_ids": [4461]},
+    "mediterraneo": {"feature_id": 100, "value_ids": [4462]},
+    "mediterráneo": {"feature_id": 100, "value_ids": [4462]},
+    "rustico":     {"feature_id": 100, "value_ids": [4466]},
+    "rústico":     {"feature_id": 100, "value_ids": [4466]},
+    # Zonas de uso (feature 26)
+    "bano":        {"feature_id": 26, "value_ids": [161]},
+    "baño":        {"feature_id": 26, "value_ids": [161]},
+    "cocina":      {"feature_id": 26, "value_ids": [162]},
+    "exterior":    {"feature_id": 26, "value_ids": [167]},
+    "terraza":     {"feature_id": 26, "value_ids": [167]},
+    "piscina":     {"feature_id": 26, "value_ids": [298]},
+    "fachada":     {"feature_id": 26, "value_ids": [173]},
+    "comercio":    {"feature_id": 26, "value_ids": [163]},
+    "comercial":   {"feature_id": 26, "value_ids": [163]},
+    # Tipo producto (feature 20)
+    "porcelanico": {"feature_id": 20, "value_ids": [78]},
+    "porcelánico": {"feature_id": 20, "value_ids": [78]},
+    "gres":        {"feature_id": 20, "value_ids": [31, 82]},
+    "revestimiento": {"feature_id": 20, "value_ids": [61]},
+    "mosaico":     {"feature_id": 20, "value_ids": [53]},
+    "slab":        {"feature_id": 20, "value_ids": [853]},
+    "20mm":        {"feature_id": 20, "value_ids": [202]},
+    "gran formato": {"feature_id": 20, "value_ids": [235]},
+    "parquet":     {"feature_id": 20, "value_ids": [1618]},
+    "laminado":    {"feature_id": 20, "value_ids": [1618]},
+    # Colores (feature 4)
+    "gris":        {"feature_id": 4, "value_ids": [13, 45, 49]},
+    "blanco":      {"feature_id": 4, "value_ids": [51]},
+    "negro":       {"feature_id": 4, "value_ids": [70]},
+    "beige":       {"feature_id": 4, "value_ids": [48]},
+    "crema":       {"feature_id": 4, "value_ids": [44]},
+    "marron":      {"feature_id": 4, "value_ids": [37]},
+    "marrón":      {"feature_id": 4, "value_ids": [37]},
+    "azul":        {"feature_id": 4, "value_ids": [83]},
+    "verde":       {"feature_id": 4, "value_ids": [84]},
+    "arena":       {"feature_id": 4, "value_ids": [46]},
+    # Acabados (feature 16)
+    "mate":        {"feature_id": 16, "value_ids": [27]},
+    "brillo":      {"feature_id": 16, "value_ids": [89]},
+    "pulido":      {"feature_id": 16, "value_ids": [242]},
+    "antideslizante": {"feature_id": 16, "value_ids": [104]},
+}
 
 
 def wants_product_search(query):
@@ -248,14 +322,99 @@ def wants_product_search(query):
             return True
     if re.search(r'\d{2,3}\s*[xX]\s*\d{2,3}', query):
         return True
+    # Also trigger if query matches feature keywords (efecto, zona, etc.)
+    for kw in FEATURE_MAP:
+        if kw in query_lower:
+            return True
     return False
+
+
+def _ps_api_get(endpoint, params, auth):
+    """Helper for PrestaShop API calls."""
+    params["output_format"] = "JSON"
+    try:
+        r = http_requests.get(f"{API_BASE}/{endpoint}", params=params, auth=auth, timeout=12)
+        if r.status_code != 200:
+            return []
+        data = r.json()
+        for key in data:
+            if isinstance(data[key], list):
+                return data[key]
+        return []
+    except Exception:
+        return []
+
+
+def _get_product_ids_by_features(query_lower, auth):
+    """Busca product IDs que tengan las features matching de la query."""
+    matched_features = {}  # feature_id -> [value_ids]
+
+    for keyword, feature_info in FEATURE_MAP.items():
+        if keyword in query_lower:
+            fid = feature_info["feature_id"]
+            if fid not in matched_features:
+                matched_features[fid] = []
+            matched_features[fid].extend(feature_info["value_ids"])
+
+    if not matched_features:
+        return []
+
+    # For each matched feature, get products with those values
+    # We use product_feature_values to find which products have these values
+    candidate_ids = None
+
+    for feature_id, value_ids in matched_features.items():
+        # Search products that have any of these feature values
+        products_with_feature = set()
+        for vid in value_ids:
+            products = _ps_api_get("products", {
+                "display": "[id]",
+                "filter[id_product_feature]": f"{feature_id}|{vid}",
+                "limit": "50",
+            }, auth)
+            for p in products:
+                products_with_feature.add(str(p.get("id", "")))
+
+        # If direct filter doesn't work, search by feature value in product name
+        if not products_with_feature:
+            # Get the value text
+            values = _ps_api_get("product_feature_values", {
+                "display": "[id,value]",
+                "filter[id]": "|".join(str(v) for v in value_ids),
+            }, auth)
+            for val_obj in values:
+                val_text = val_obj.get("value", "")
+                if isinstance(val_text, list):
+                    val_text = val_text[0].get("value", "") if val_text else ""
+                elif isinstance(val_text, dict):
+                    val_text = list(val_text.values())[0] if val_text else ""
+                if val_text and len(val_text) > 2:
+                    prods = _ps_api_get("products", {
+                        "display": "[id]",
+                        "filter[name]": f"%{val_text}%",
+                        "limit": "30",
+                    }, auth)
+                    for p in prods:
+                        products_with_feature.add(str(p.get("id", "")))
+
+        if products_with_feature:
+            if candidate_ids is None:
+                candidate_ids = products_with_feature
+            else:
+                # Intersect: products must match ALL features
+                candidate_ids = candidate_ids & products_with_feature
+
+    return list(candidate_ids or [])
 
 
 def search_prestashop(query, limit=5):
     if not PRESTASHOP_API_KEY:
         return None
 
-    # Parse query
+    auth = (PRESTASHOP_API_KEY, "")
+    query_lower = query.lower()
+
+    # Parse formato (NNxNN)
     formato_match = re.search(r'(\d{2,3})\s*[xX]\s*(\d{2,3})', query)
     formato = None
     query_clean = query
@@ -267,52 +426,40 @@ def search_prestashop(query, limit=5):
     words = query_clean.lower().split()
     keywords = [w for w in words if w not in STOP_WORDS and len(w) > 2]
 
-    auth = (PRESTASHOP_API_KEY, "")
     all_products = []
 
+    # Strategy 1: Search by product features (efecto, zona, estilo, color)
+    feature_product_ids = _get_product_ids_by_features(query_lower, auth)
+    if feature_product_ids:
+        # Get full product data for matched IDs (batch of max 20)
+        id_filter = "|".join(feature_product_ids[:20])
+        products = _ps_api_get("products", {
+            "display": "[id,name,price,reference,link_rewrite,id_category_default]",
+            "filter[id]": f"[{id_filter}]",
+        }, auth)
+        all_products.extend(products)
+
+    # Strategy 2: Search by name keywords
     for kw in keywords[:3]:
-        try:
-            r = http_requests.get(
-                f"{API_BASE}/products",
-                params={
-                    "output_format": "JSON",
-                    "display": "[id,name,price,reference,link_rewrite]",
-                    "filter[name]": f"%[{kw.upper()}]%",
-                    "limit": "10",
-                },
-                auth=auth,
-                timeout=10,
-            )
-            if r.status_code == 200:
-                data = r.json()
-                for key in data:
-                    if isinstance(data[key], list):
-                        all_products.extend(data[key])
-        except Exception:
-            pass
+        if len(kw) < 3:
+            continue
+        products = _ps_api_get("products", {
+            "display": "[id,name,price,reference,link_rewrite,id_category_default]",
+            "filter[name]": f"%{kw}%",
+            "limit": "15",
+        }, auth)
+        all_products.extend(products)
 
+    # Strategy 3: Search by formato
     if formato:
-        try:
-            r = http_requests.get(
-                f"{API_BASE}/products",
-                params={
-                    "output_format": "JSON",
-                    "display": "[id,name,price,reference,link_rewrite]",
-                    "filter[name]": f"%[{formato}]%",
-                    "limit": "10",
-                },
-                auth=auth,
-                timeout=10,
-            )
-            if r.status_code == 200:
-                data = r.json()
-                for key in data:
-                    if isinstance(data[key], list):
-                        all_products.extend(data[key])
-        except Exception:
-            pass
+        products = _ps_api_get("products", {
+            "display": "[id,name,price,reference,link_rewrite,id_category_default]",
+            "filter[name]": f"%{formato}%",
+            "limit": "15",
+        }, auth)
+        all_products.extend(products)
 
-    # Deduplicate and format
+    # Deduplicate
     seen = set()
     unique = []
     for p in all_products:
@@ -325,16 +472,33 @@ def search_prestashop(query, limit=5):
         return None
 
     # Score by relevance
-    if keywords:
-        scored = []
-        for p in unique:
-            name_lower = p.get("name", "").lower()
-            score = sum(1 for kw in keywords if kw in name_lower)
-            if formato and formato in p.get("name", "").upper().replace(" ", ""):
-                score += 2
-            scored.append((score, p))
-        scored.sort(key=lambda x: -x[0])
-        unique = [p for s, p in scored if s > 0]
+    scored = []
+    feature_ids_set = set(feature_product_ids)
+    for p in unique:
+        score = 0
+        pid = str(p.get("id", ""))
+        name_lower = p.get("name", "").lower()
+
+        # Bonus if found via features (most relevant)
+        if pid in feature_ids_set:
+            score += 5
+
+        # Keyword matches in name
+        for kw in keywords:
+            if kw in name_lower:
+                score += 1
+
+        # Formato match
+        if formato and formato.lower().replace("x", "") in name_lower.replace("x", "").replace(" ", ""):
+            score += 3
+
+        scored.append((score, p))
+
+    scored.sort(key=lambda x: -x[0])
+    unique = [p for s, p in scored if s > 0]
+
+    if not unique:
+        return None
 
     lines = [f"\n--- PRODUCTOS DEL CATALOGO FERROLAN.ES ({min(len(unique), limit)} resultados) ---\n"]
     for i, p in enumerate(unique[:limit]):
