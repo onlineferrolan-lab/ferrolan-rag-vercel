@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "framework": null,
-  "functions": {
-    "api/chat.py": {
-      "maxDuration": 60
-    }
-  },
   "builds": [
     {
       "src": "api/**/*.py",
