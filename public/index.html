@@ -506,7 +506,7 @@ async function sendMessage(text) {
         const body = { query: text };
         if (sessionId) body.session_id = sessionId;
 
-        const response = await fetch(`${API_URL}/api/chat.py`, {
+        const response = await fetch(`${API_URL}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
