@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "framework": null,
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "env": {
+    "ANTHROPIC_API_KEY": "@anthropic-api-key",
+    "PINECONE_API_KEY": "@pinecone-api-key",
+    "PRESTASHOP_API_KEY": "@prestashop-api-key",
+    "HF_API_TOKEN": "@hf-api-token"
+  }
+}
