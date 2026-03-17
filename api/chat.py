@@ -23,7 +23,7 @@ PRESTASHOP_API_KEY = os.environ.get("PRESTASHOP_API_KEY", "")
 HF_API_TOKEN = os.environ.get("HF_API_TOKEN", "")
 
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-HF_INFERENCE_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
+HF_INFERENCE_URL = f"https://router.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
 
 SHOP_URL = "https://ferrolan.es"
 API_BASE = f"{SHOP_URL}/api"
