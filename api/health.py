@@ -18,7 +18,7 @@ class handler(BaseHTTPRequestHandler):
             r = requests.post(
                 f"{host}/query",
                 headers={"Api-Key": api_key, "Content-Type": "application/json"},
-                json={"vector": [0.0] * 384, "topK": 1},
+                json={"vector": [0.0] * 1024, "topK": 1},
                 timeout=5,
             )
             pinecone_ok = r.status_code == 200

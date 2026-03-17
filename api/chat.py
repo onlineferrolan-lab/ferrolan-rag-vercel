@@ -2,7 +2,7 @@
 FERROLAN RAG - Vercel Serverless Function
 ==========================================
 Endpoint /api/chat - Recibe pregunta, busca en Pinecone, responde con Claude.
-Usa HuggingFace Inference API para embeddings (sin dependencias pesadas).
+Usa Pinecone Inference para embeddings (multilingual-e5-large, 1024 dims).
 """
 
 import json
@@ -14,16 +14,21 @@ from http.server import BaseHTTPRequestHandler
 
 import requests as http_requests
 from anthropic import Anthropic
+from pinecone import Pinecone
 
 # ── Configuracion ──────────────────────────────────────────
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
 PINECONE_HOST = "https://ferrolan-rag-qtvdakx.svc.aped-4627-b74a.pinecone.io"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 PRESTASHOP_API_KEY = os.environ.get("PRESTASHOP_API_KEY", "")
-HF_API_TOKEN = os.environ.get("HF_API_TOKEN", "")
 
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-HF_INFERENCE_URL = f"https://router.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
+# Inicializar cliente Pinecone (singleton)
+_pc_client = None
+def _get_pc():
+    global _pc_client
+    if _pc_client is None:
+        _pc_client = Pinecone(api_key=PINECONE_API_KEY)
+    return _pc_client
 
 SHOP_URL = "https://ferrolan.es"
 API_BASE = f"{SHOP_URL}/api"
@@ -131,28 +136,16 @@ def route_query(query):
     return selected[:3]
 
 
-# ── Embeddings via HuggingFace Inference API ───────────────
+# ── Embeddings via Pinecone SDK ───────────────────────────
 def get_embedding(text):
-    headers = {}
-    if HF_API_TOKEN:
-        headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
-
-    response = http_requests.post(
-        HF_INFERENCE_URL,
-        headers=headers,
-        json={"inputs": text, "options": {"wait_for_model": True}},
-        timeout=30,
+    """Genera embedding usando Pinecone Inference SDK (multilingual-e5-large, 1024 dims)."""
+    pc = _get_pc()
+    result = pc.inference.embed(
+        model="multilingual-e5-large",
+        inputs=[text],
+        parameters={"input_type": "query"},
     )
-    if response.status_code != 200:
-        raise Exception(f"HF Inference error {response.status_code}: {response.text[:200]}")
-
-    result = response.json()
-    # HF returns [[...]] for single input
-    if isinstance(result, list) and len(result) > 0:
-        if isinstance(result[0], list):
-            return result[0]
-        return result
-    raise Exception(f"Unexpected HF response format: {type(result)}")
+    return result.data[0].values
 
 
 # ── Pinecone search ───────────────────────────────────────
