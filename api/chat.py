@@ -69,7 +69,10 @@ TOPIC_KEYWORDS = [
     "problema", "desprendimiento", "fisura", "grieta",
     "reforma", "obra", "construccion", "construcción",
     "ferrolan", "catalogo", "catálogo", "producto", "coleccion", "colección",
-    "horario", "direccion", "contacto", "envio", "devolucion", "garantia",
+    "horario", "direccion", "contacto", "envio", "devolucion", "devolución",
+    "devolver", "garantia", "garantía",
+    "cajas", "metros", "m2", "cantidad", "cuantas", "cuántas", "sobra", "sobran",
+    "pedido", "fabrica", "fábrica", "stock", "outlet",
     "parquet", "laminado", "vinilico", "vinílico", "tarima",
     "mampara", "lavabo", "sanitario", "inodoro", "mueble de baño",
     "plato de ducha", "bañera", "banera",
@@ -107,12 +110,12 @@ def route_query(query):
     query_lower = query.lower()
     rules = {
         "productos": ["porcelanico", "porcelánico", "pasta blanca", "gres", "20mm", "mosaico", "slab", "tipo de azulejo"],
-        "estetica": ["efecto", "marmol", "mármol", "piedra", "cemento", "madera", "hidraulico", "estilo", "tendencia", "combinar", "color", "decorar"],
+        "estetica": ["efecto", "marmol", "mármol", "piedra", "cemento", "madera", "hidraulico", "estilo", "tendencia", "combinar", "color", "decorar", "se lleva", "moda", "actual"],
         "zonas": ["baño", "bano", "ducha", "cocina", "salon", "salón", "terraza", "exterior", "piscina", "fachada"],
-        "tecnico": ["pei", "antideslizante", "clase r", "clase c", "resistencia", "formato", "espesor", "rectificado", "tecnico"],
-        "colocacion": ["colocar", "colocacion", "colocación", "instalar", "cemento cola", "adhesivo", "junta", "plots"],
+        "tecnico": ["pei", "antideslizante", "clase r", "clase c", "resistencia", "formato", "espesor", "rectificado", "tecnico", "acabado", "canto", "biselado"],
+        "colocacion": ["colocar", "colocacion", "colocación", "instalar", "cemento cola", "adhesivo", "junta", "plots", "calzos", "cuñas", "rejuntado", "mortero de junta", "patron", "patrón", "espiga"],
         "mantenimiento": ["limpiar", "limpieza", "mantenimiento", "mancha", "primera limpieza", "oxido"],
-        "comercial": ["marca", "precio", "presupuesto", "pedido", "stock", "oferta", "outlet"],
+        "comercial": ["marca", "precio", "presupuesto", "pedido", "stock", "oferta", "outlet", "devolucion", "devolución", "devolver", "sobra", "sobran", "cajas", "cantidad", "cuantas", "cuántas", "metros", "m2", "desperdicio", "merma", "calculo", "cálculo", "fabrica", "fábrica"],
         "problemas": ["problema", "ceja", "desprendimiento", "fisura", "grieta", "levantado", "eflorescencia"],
         "griferia": ["grifo", "griferia", "grifería", "monomando", "termostatico", "rociador"],
     }
@@ -125,7 +128,10 @@ def route_query(query):
                 break
     if not selected:
         selected = ["productos", "zonas", "tecnico"]
-    return selected[:3]
+    # Always include "general" domain (contains DEVO, info tienda, etc.)
+    if "general" not in selected:
+        selected.append("general")
+    return selected[:4]
 
 
 # ── Embeddings via Pinecone Inference REST API ────────────
@@ -501,7 +507,13 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             content_length = int(self.headers.get("Content-Length", 0))
-            body = json.loads(self.rfile.read(content_length))
+            raw_bytes = self.rfile.read(content_length)
+            # Ensure UTF-8 decoding (handle Latin-1 fallback)
+            try:
+                raw_text = raw_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                raw_text = raw_bytes.decode("latin-1")
+            body = json.loads(raw_text)
             query = body.get("query", "").strip()
 
             if not query or len(query) < 3:
