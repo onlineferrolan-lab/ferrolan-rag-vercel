@@ -76,22 +76,23 @@
         }
         .ferrolan-chat-window.open { display: flex; }
 
-        /* ── Header ──────────────────────────────────── */
+        /* ── Header (rojo Ferrolan) ──────────────────── */
         .ferrolan-chat-header {
-            background: var(--ferrolan-white);
-            color: var(--ferrolan-text);
-            padding: 16px 20px;
+            background: var(--ferrolan-red);
+            color: white;
+            padding: 14px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid var(--ferrolan-border);
         }
         .ferrolan-chat-header .avatar {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             flex-shrink: 0;
             overflow: hidden;
+            background: white;
+            padding: 3px;
         }
         .ferrolan-chat-header .avatar img {
             width: 100%;
@@ -102,11 +103,11 @@
         .ferrolan-chat-header .info h3 {
             font-size: 15px;
             font-weight: 700;
-            color: var(--ferrolan-text);
+            color: white;
         }
         .ferrolan-chat-header .info p {
             font-size: 12px;
-            color: var(--ferrolan-text-light);
+            color: rgba(255,255,255,0.8);
             display: flex;
             align-items: center;
             gap: 4px;
@@ -114,68 +115,83 @@
         }
         .ferrolan-chat-header .status-dot {
             width: 7px; height: 7px;
-            background: #22c55e;
+            background: #4ade80;
             border-radius: 50%;
             display: inline-block;
             animation: pulse-dot 2s infinite;
         }
         .ferrolan-chat-header .close-btn {
-            width: 32px; height: 32px;
+            width: 30px; height: 30px;
             border: none;
-            background: var(--ferrolan-gray-light);
+            background: rgba(255,255,255,0.15);
             border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--ferrolan-gray);
-            transition: all 0.2s;
+            color: white;
+            transition: background 0.2s;
         }
         .ferrolan-chat-header .close-btn:hover {
-            background: var(--ferrolan-border);
-            color: var(--ferrolan-text);
+            background: rgba(255,255,255,0.25);
         }
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-        /* ── Sector chips ────────────────────────────── */
-        .sector-bar {
-            padding: 10px 16px;
+        /* ── Category selector (desplegable) ─────────── */
+        .category-bar {
+            padding: 8px 16px;
             display: flex;
-            gap: 6px;
-            overflow-x: auto;
+            align-items: center;
+            gap: 8px;
+            background: var(--ferrolan-white);
             border-bottom: 1px solid var(--ferrolan-gray-light);
-            scrollbar-width: none;
-            background: var(--ferrolan-white);
+            position: relative;
         }
-        .sector-bar::-webkit-scrollbar { display: none; }
-        .sector-chip {
-            background: var(--ferrolan-white);
-            border: 1px solid var(--ferrolan-border);
-            padding: 6px 14px;
-            border-radius: 20px;
+        .category-bar label {
             font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
             color: var(--ferrolan-text-light);
+            font-weight: 500;
             white-space: nowrap;
-            flex-shrink: 0;
         }
-        .sector-chip:hover {
+        .category-select-wrap {
+            flex: 1;
+            position: relative;
+        }
+        .category-select {
+            width: 100%;
+            padding: 7px 32px 7px 12px;
+            border: 1px solid var(--ferrolan-border);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ferrolan-text);
+            background: var(--ferrolan-bg);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .category-select:focus,
+        .category-select:hover {
             border-color: var(--ferrolan-red);
-            color: var(--ferrolan-red);
         }
-        .sector-chip.active {
-            background: var(--ferrolan-red);
-            color: white;
-            border-color: var(--ferrolan-red);
-        }
-        .sector-chip .chip-icon {
-            margin-right: 4px;
-            font-size: 11px;
+        .category-select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--ferrolan-gray);
+            pointer-events: none;
         }
 
         /* ── Mensajes ────────────────────────────────── */
@@ -441,6 +457,7 @@
 </button>
 
 <div class="ferrolan-chat-window" id="chatWindow">
+    <!-- Header rojo -->
     <div class="ferrolan-chat-header">
         <div class="avatar"><img src="/ferrolan-logo.jpg" alt="Ferrolan"></div>
         <div class="info">
@@ -448,29 +465,26 @@
             <p><span class="status-dot"></span>En línea · Materiales de construcción</p>
         </div>
         <button class="close-btn" id="closeChat" aria-label="Cerrar chat">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
-    <!-- Sector chips -->
-    <div class="sector-bar" id="sectorBar">
-        <button class="sector-chip" data-sector="ceramica" onclick="selectSector(this)">
-            <span class="chip-icon">◧</span>Cerámica
-        </button>
-        <button class="sector-chip" data-sector="griferia" onclick="selectSector(this)">
-            <span class="chip-icon">☔</span>Grifería
-        </button>
-        <button class="sector-chip" data-sector="bano" onclick="selectSector(this)">
-            <span class="chip-icon">🚿</span>Baño
-        </button>
-        <button class="sector-chip" data-sector="parquet" onclick="selectSector(this)">
-            <span class="chip-icon">▬</span>Parquet
-        </button>
-        <button class="sector-chip" data-sector="mamparas" onclick="selectSector(this)">
-            <span class="chip-icon">▯</span>Mamparas
-        </button>
+    <!-- Selector de categoría (desplegable) -->
+    <div class="category-bar">
+        <label for="categorySelect">Tema:</label>
+        <div class="category-select-wrap">
+            <select class="category-select" id="categorySelect">
+                <option value="default">Todas las categorías</option>
+                <option value="ceramica">🧱 Cerámica y azulejos</option>
+                <option value="griferia">🚿 Grifería</option>
+                <option value="bano">🛁 Baño completo</option>
+                <option value="parquet">🪵 Parquet y suelos</option>
+                <option value="mamparas">🪟 Mamparas</option>
+                <option value="tiendas">📍 Nuestras tiendas</option>
+            </select>
+        </div>
     </div>
 
     <div class="ferrolan-chat-messages" id="chatMessages">
@@ -534,6 +548,11 @@ const SECTOR_SUGGESTIONS = {
         "Mampara fija de cristal",
         "Mamparas para bañera",
     ],
+    tiendas: [
+        "¿Dónde están las tiendas de Ferrolan?",
+        "Horario de la tienda de Badalona",
+        "¿Qué tienda tiene outlet?",
+    ],
 };
 
 // ── Estado ───────────────────────────────────────────────
@@ -550,6 +569,7 @@ const input = document.getElementById('chatInput');
 const sendBtn = document.getElementById('chatSend');
 const suggestionsEl = document.getElementById('suggestions');
 const closeBtn = document.getElementById('closeChat');
+const categorySelect = document.getElementById('categorySelect');
 
 // Mostrar sugerencias iniciales
 showSuggestions('default');
@@ -568,13 +588,11 @@ closeBtn.addEventListener('click', () => {
     toggle.classList.remove('open');
 });
 
-// ── Seleccionar sector ──────────────────────────────────
-function selectSector(btn) {
-    document.querySelectorAll('.sector-chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    currentSector = btn.dataset.sector;
+// ── Seleccionar categoría (desplegable) ─────────────────
+categorySelect.addEventListener('change', () => {
+    currentSector = categorySelect.value;
     showSuggestions(currentSector);
-}
+});
 
 function showSuggestions(sector) {
     const items = SECTOR_SUGGESTIONS[sector] || SECTOR_SUGGESTIONS.default;
