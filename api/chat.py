@@ -69,8 +69,12 @@ TOPIC_KEYWORDS = [
     "problema", "desprendimiento", "fisura", "grieta",
     "reforma", "obra", "construccion", "construcción",
     "ferrolan", "catalogo", "catálogo", "producto", "coleccion", "colección",
-    "horario", "direccion", "contacto", "envio", "devolucion", "devolución",
-    "devolver", "garantia", "garantía",
+    "horario", "direccion", "dirección", "contacto", "envio", "envío",
+    "devolucion", "devolución", "devolver", "garantia", "garantía",
+    "tienda", "tiendas", "donde", "dónde", "visitar", "exposicion", "exposición",
+    "parking", "aparcamiento", "telefono", "teléfono", "email", "correo",
+    "urgell", "eixample", "santa coloma", "rubi", "rubí", "badalona", "clot",
+    "meridiana", "outlet fondo", "outlet central", "sede",
     "cajas", "metros", "m2", "cantidad", "cuantas", "cuántas", "sobra", "sobran",
     "pedido", "fabrica", "fábrica", "stock", "outlet",
     "parquet", "laminado", "vinilico", "vinílico", "tarima",
@@ -118,6 +122,7 @@ def route_query(query):
         "comercial": ["marca", "precio", "presupuesto", "pedido", "stock", "oferta", "outlet", "devolucion", "devolución", "devolver", "sobra", "sobran", "cajas", "cantidad", "cuantas", "cuántas", "metros", "m2", "desperdicio", "merma", "calculo", "cálculo", "fabrica", "fábrica"],
         "problemas": ["problema", "ceja", "desprendimiento", "fisura", "grieta", "levantado", "eflorescencia"],
         "griferia": ["grifo", "griferia", "grifería", "monomando", "termostatico", "rociador"],
+        "general": ["tienda", "tiendas", "horario", "horarios", "direccion", "dirección", "contacto", "telefono", "teléfono", "email", "visitar", "parking", "aparcamiento", "exposicion", "exposición", "donde", "dónde", "urgell", "eixample", "santa coloma", "rubi", "rubí", "badalona", "clot", "meridiana", "outlet fondo", "outlet central", "sede", "ferrolan"],
     }
     selected = []
     for dominio, keywords in rules.items():
