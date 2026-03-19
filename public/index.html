@@ -57,6 +57,30 @@
         .ferrolan-chat-toggle.open svg.icon-chat { display: none; }
         .ferrolan-chat-toggle:not(.open) svg.icon-close { display: none; }
 
+        /* Badge de notificación */
+        .ferrolan-chat-toggle .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid white;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: badge-bounce 2s ease infinite;
+        }
+        .ferrolan-chat-toggle.open .badge { display: none; }
+        @keyframes badge-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
         /* ── Ventana del chat ────────────────────────── */
         .ferrolan-chat-window {
             position: fixed;
@@ -70,11 +94,19 @@
             border-radius: var(--ferrolan-radius);
             box-shadow: 0 12px 40px var(--ferrolan-shadow), 0 0 0 1px rgba(0,0,0,0.04);
             z-index: 9998;
-            display: none;
+            display: flex;
             flex-direction: column;
             overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
-        .ferrolan-chat-window.open { display: flex; }
+        .ferrolan-chat-window.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
 
         /* ── Header (rojo Ferrolan) ──────────────────── */
         .ferrolan-chat-header {
@@ -402,6 +434,48 @@
         .ferrolan-chat-input button:hover { background: var(--ferrolan-red-dark); }
         .ferrolan-chat-input button:disabled { background: #d1d5db; cursor: not-allowed; }
 
+        /* ── Timestamp ────────────────────────────────── */
+        .msg-time {
+            font-size: 10px;
+            color: #adb5bd;
+            margin-top: 4px;
+        }
+        .message.user .msg-time { text-align: right; color: rgba(255,255,255,0.6); }
+        .message.bot .msg-time { text-align: left; }
+
+        /* ── Feedback buttons ────────────────────────── */
+        .msg-feedback {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            justify-content: flex-end;
+        }
+        .msg-feedback button {
+            border: 1px solid var(--ferrolan-border);
+            background: var(--ferrolan-bg);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--ferrolan-gray);
+            line-height: 1;
+        }
+        .msg-feedback button:hover {
+            border-color: var(--ferrolan-red);
+            background: white;
+        }
+        .msg-feedback button.selected {
+            border-color: var(--ferrolan-red);
+            background: var(--ferrolan-red);
+            color: white;
+        }
+        .msg-feedback .feedback-thanks {
+            font-size: 11px;
+            color: var(--ferrolan-text-light);
+            align-self: center;
+        }
+
         /* ── Response time badge ─────────────────────── */
         .response-time {
             font-size: 10px;
@@ -448,6 +522,7 @@
 
 <!-- ── Chat Widget ────────────────────────────────────────── -->
 <button class="ferrolan-chat-toggle" id="chatToggle" aria-label="Abrir chat">
+    <span class="badge">1</span>
     <svg class="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
@@ -658,11 +733,18 @@ async function sendMessage(text) {
     input.focus();
 }
 
+// ── Hora actual formateada ────────────────────────────────
+function getTime() {
+    const now = new Date();
+    return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+}
+
 // ── Agregar mensaje simple ───────────────────────────────
 function addMessage(text, type) {
     const div = document.createElement('div');
     div.className = `message ${type}`;
-    div.textContent = text;
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    div.innerHTML = `${escaped}<div class="msg-time">${getTime()}</div>`;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -730,6 +812,13 @@ function addBotMessage(data) {
         html += `<div class="response-time">${data.tiempo_total.toFixed(1)}s${data.cached ? ' (caché)' : ''}</div>`;
     }
 
+    // Timestamp + feedback
+    html += `<div class="msg-time">${getTime()}</div>`;
+    html += `<div class="msg-feedback">
+        <button onclick="sendFeedback(this, 'up')" title="Respuesta útil">👍</button>
+        <button onclick="sendFeedback(this, 'down')" title="Respuesta mejorable">👎</button>
+    </div>`;
+
     div.innerHTML = html;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
@@ -748,6 +837,16 @@ function showTyping() {
 // ── Sugerencia rápida ────────────────────────────────────
 function sendSuggestion(btn) {
     sendMessage(btn.textContent);
+}
+
+// ── Feedback (👍/👎) ─────────────────────────────────────
+function sendFeedback(btn, type) {
+    const container = btn.parentElement;
+    container.querySelectorAll('button').forEach(b => b.remove());
+    const thanks = document.createElement('span');
+    thanks.className = 'feedback-thanks';
+    thanks.textContent = type === 'up' ? '¡Gracias por tu valoración!' : 'Gracias, lo tendremos en cuenta';
+    container.appendChild(thanks);
 }
 
 // ── Event listeners ──────────────────────────────────────
