@@ -89,15 +89,14 @@
         .ferrolan-chat-header .avatar {
             width: 42px;
             height: 42px;
-            background: var(--ferrolan-red);
             border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            color: white;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+        .ferrolan-chat-header .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         .ferrolan-chat-header .info { flex: 1; }
         .ferrolan-chat-header .info h3 {
@@ -443,7 +442,7 @@
 
 <div class="ferrolan-chat-window" id="chatWindow">
     <div class="ferrolan-chat-header">
-        <div class="avatar">F</div>
+        <div class="avatar"><img src="/ferrolan-logo.jpg" alt="Ferrolan"></div>
         <div class="info">
             <h3>Asistente Ferrolan</h3>
             <p><span class="status-dot"></span>En línea · Materiales de construcción</p>
