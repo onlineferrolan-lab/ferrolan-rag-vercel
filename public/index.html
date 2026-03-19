@@ -9,11 +9,28 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f8f9fa;
         }
 
-        /* ── Boton flotante ───────────────────────────── */
+        /* ── Variables Ferrolan ──────────────────────── */
+        :root {
+            --ferrolan-red: #c40731;
+            --ferrolan-red-dark: #a30628;
+            --ferrolan-red-light: #e8314f;
+            --ferrolan-dark: #212529;
+            --ferrolan-gray: #6c757d;
+            --ferrolan-gray-light: #e9ecef;
+            --ferrolan-bg: #f8f9fa;
+            --ferrolan-white: #ffffff;
+            --ferrolan-text: #212529;
+            --ferrolan-text-light: #6c757d;
+            --ferrolan-border: #dee2e6;
+            --ferrolan-shadow: rgba(0,0,0,0.12);
+            --ferrolan-radius: 12px;
+        }
+
+        /* ── Botón flotante ─────────────────────────── */
         .ferrolan-chat-toggle {
             position: fixed;
             bottom: 24px;
@@ -21,37 +38,37 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: #1a1a2e;
+            background: var(--ferrolan-red);
             color: white;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(196,7,49,0.4);
             z-index: 9999;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .ferrolan-chat-toggle:hover {
-            transform: scale(1.1);
-            background: #16213e;
+            transform: scale(1.08);
+            box-shadow: 0 6px 24px rgba(196,7,49,0.5);
         }
-        .ferrolan-chat-toggle svg { width: 28px; height: 28px; }
+        .ferrolan-chat-toggle svg { width: 26px; height: 26px; }
         .ferrolan-chat-toggle.open svg.icon-chat { display: none; }
         .ferrolan-chat-toggle:not(.open) svg.icon-close { display: none; }
 
-        /* ── Ventana del chat ─────────────────────────── */
+        /* ── Ventana del chat ────────────────────────── */
         .ferrolan-chat-window {
             position: fixed;
             bottom: 96px;
             right: 24px;
             width: 420px;
             max-width: calc(100vw - 48px);
-            height: 600px;
+            height: 620px;
             max-height: calc(100vh - 120px);
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            background: var(--ferrolan-white);
+            border-radius: var(--ferrolan-radius);
+            box-shadow: 0 12px 40px var(--ferrolan-shadow), 0 0 0 1px rgba(0,0,0,0.04);
             z-index: 9998;
             display: none;
             flex-direction: column;
@@ -59,43 +76,110 @@
         }
         .ferrolan-chat-window.open { display: flex; }
 
-        /* ── Header ───────────────────────────────────── */
+        /* ── Header ──────────────────────────────────── */
         .ferrolan-chat-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
+            background: var(--ferrolan-white);
+            color: var(--ferrolan-text);
             padding: 16px 20px;
             display: flex;
             align-items: center;
             gap: 12px;
+            border-bottom: 1px solid var(--ferrolan-border);
         }
         .ferrolan-chat-header .avatar {
-            width: 40px;
-            height: 40px;
-            background: #e94560;
-            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            background: var(--ferrolan-red);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 18px;
+            color: white;
             flex-shrink: 0;
         }
-        .ferrolan-chat-header .info h3 { font-size: 15px; font-weight: 600; }
-        .ferrolan-chat-header .info p { font-size: 12px; opacity: 0.7; }
+        .ferrolan-chat-header .info { flex: 1; }
+        .ferrolan-chat-header .info h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--ferrolan-text);
+        }
+        .ferrolan-chat-header .info p {
+            font-size: 12px;
+            color: var(--ferrolan-text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
         .ferrolan-chat-header .status-dot {
-            width: 8px; height: 8px;
-            background: #4ade80;
+            width: 7px; height: 7px;
+            background: #22c55e;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 4px;
             animation: pulse-dot 2s infinite;
+        }
+        .ferrolan-chat-header .close-btn {
+            width: 32px; height: 32px;
+            border: none;
+            background: var(--ferrolan-gray-light);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ferrolan-gray);
+            transition: all 0.2s;
+        }
+        .ferrolan-chat-header .close-btn:hover {
+            background: var(--ferrolan-border);
+            color: var(--ferrolan-text);
         }
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-        /* ── Mensajes ─────────────────────────────────── */
+        /* ── Sector chips ────────────────────────────── */
+        .sector-bar {
+            padding: 10px 16px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--ferrolan-gray-light);
+            scrollbar-width: none;
+            background: var(--ferrolan-white);
+        }
+        .sector-bar::-webkit-scrollbar { display: none; }
+        .sector-chip {
+            background: var(--ferrolan-white);
+            border: 1px solid var(--ferrolan-border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--ferrolan-text-light);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .sector-chip:hover {
+            border-color: var(--ferrolan-red);
+            color: var(--ferrolan-red);
+        }
+        .sector-chip.active {
+            background: var(--ferrolan-red);
+            color: white;
+            border-color: var(--ferrolan-red);
+        }
+        .sector-chip .chip-icon {
+            margin-right: 4px;
+            font-size: 11px;
+        }
+
+        /* ── Mensajes ────────────────────────────────── */
         .ferrolan-chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -104,50 +188,53 @@
             flex-direction: column;
             gap: 12px;
             scroll-behavior: smooth;
+            background: var(--ferrolan-bg);
         }
 
         .message {
             max-width: 88%;
             padding: 12px 16px;
-            border-radius: 12px;
+            border-radius: var(--ferrolan-radius);
             font-size: 14px;
             line-height: 1.6;
             animation: fadeIn 0.3s ease;
             word-wrap: break-word;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .message.bot {
-            background: #f0f0f5;
-            color: #333;
+            background: var(--ferrolan-white);
+            color: var(--ferrolan-text);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
         .message.user {
-            background: #1a1a2e;
+            background: var(--ferrolan-red);
             color: white;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
-        .message.bot strong { color: #1a1a2e; }
+        .message.bot strong { color: var(--ferrolan-red); }
         .message.bot ul, .message.bot ol {
             margin: 6px 0;
             padding-left: 20px;
         }
         .message.bot li { margin: 3px 0; }
         .message.bot a {
-            color: #e94560;
+            color: var(--ferrolan-red);
             text-decoration: none;
+            font-weight: 500;
         }
         .message.bot a:hover { text-decoration: underline; }
 
-        /* ── Product cards ────────────────────────────── */
+        /* ── Product cards ───────────────────────────── */
         .product-card {
-            background: white;
-            border: 1px solid #e0e0e0;
+            background: var(--ferrolan-white);
+            border: 1px solid var(--ferrolan-gray-light);
             border-radius: 8px;
             padding: 10px 12px;
             margin: 6px 0;
@@ -157,7 +244,7 @@
             gap: 8px;
             transition: border-color 0.2s;
         }
-        .product-card:hover { border-color: #e94560; }
+        .product-card:hover { border-color: var(--ferrolan-red); }
         .product-card .product-info {
             flex: 1;
             min-width: 0;
@@ -165,148 +252,129 @@
         .product-card .product-name {
             font-weight: 600;
             font-size: 13px;
-            color: #1a1a2e;
+            color: var(--ferrolan-text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .product-card .product-ref {
             font-size: 11px;
-            color: #888;
+            color: var(--ferrolan-text-light);
         }
         .product-card .product-price {
             font-weight: 700;
             font-size: 14px;
-            color: #e94560;
+            color: var(--ferrolan-red);
             white-space: nowrap;
         }
         .product-card .product-link {
             font-size: 11px;
-            color: #e94560;
+            color: var(--ferrolan-red);
             text-decoration: none;
             display: inline-block;
             margin-top: 2px;
         }
 
-        /* ── Sources ──────────────────────────────────── */
+        /* ── Sources ─────────────────────────────────── */
         .message .sources {
             margin-top: 10px;
             padding-top: 8px;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid var(--ferrolan-gray-light);
             font-size: 12px;
-            color: #666;
+            color: var(--ferrolan-text-light);
         }
         .message .sources span {
             display: inline-block;
-            background: #e8e8f0;
+            background: var(--ferrolan-bg);
             padding: 2px 8px;
             border-radius: 10px;
             margin: 2px 4px 2px 0;
             font-size: 11px;
+            border: 1px solid var(--ferrolan-gray-light);
         }
         .message .disclaimer {
             margin-top: 8px;
             font-size: 11px;
-            color: #999;
+            color: var(--ferrolan-text-light);
             font-style: italic;
         }
 
-        /* ── Typing indicator ─────────────────────────── */
+        /* ── Typing indicator ────────────────────────── */
         .typing-indicator {
             display: flex;
             gap: 4px;
             padding: 12px 16px;
             align-self: flex-start;
+            background: var(--ferrolan-white);
+            border-radius: var(--ferrolan-radius);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
         .typing-indicator span {
             width: 8px; height: 8px;
-            background: #ccc;
+            background: #d1d5db;
             border-radius: 50%;
             animation: typing 1.4s infinite;
         }
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); background: #ccc; }
-            30% { transform: translateY(-8px); background: #999; }
+            0%, 60%, 100% { transform: translateY(0); background: #d1d5db; }
+            30% { transform: translateY(-8px); background: var(--ferrolan-red-light); }
         }
 
-        /* ── Sector chips ─────────────────────────────── */
-        .sector-bar {
-            padding: 8px 16px;
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            border-bottom: 1px solid #f0f0f0;
-            scrollbar-width: none;
-        }
-        .sector-bar::-webkit-scrollbar { display: none; }
-        .sector-chip {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 5px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #555;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .sector-chip:hover,
-        .sector-chip.active {
-            background: #1a1a2e;
-            color: white;
-            border-color: #1a1a2e;
-        }
-        .sector-chip .chip-icon {
-            margin-right: 4px;
-        }
-
-        /* ── Suggestions ──────────────────────────────── */
+        /* ── Suggestions ─────────────────────────────── */
         .suggestions {
             padding: 8px 16px 4px;
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+            background: var(--ferrolan-white);
         }
         .suggestions button {
-            background: #f0f0f5;
-            border: 1px solid #ddd;
-            padding: 6px 12px;
-            border-radius: 16px;
+            background: var(--ferrolan-bg);
+            border: 1px solid var(--ferrolan-border);
+            padding: 7px 14px;
+            border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            color: #555;
+            color: var(--ferrolan-text-light);
+            font-weight: 500;
         }
         .suggestions button:hover {
-            background: #1a1a2e;
+            background: var(--ferrolan-red);
             color: white;
-            border-color: #1a1a2e;
+            border-color: var(--ferrolan-red);
         }
 
-        /* ── Input ────────────────────────────────────── */
+        /* ── Input ───────────────────────────────────── */
         .ferrolan-chat-input {
             padding: 12px 16px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--ferrolan-gray-light);
             display: flex;
             gap: 8px;
+            background: var(--ferrolan-white);
         }
         .ferrolan-chat-input input {
             flex: 1;
             padding: 10px 16px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--ferrolan-border);
             border-radius: 24px;
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
+            font-family: inherit;
+            color: var(--ferrolan-text);
         }
-        .ferrolan-chat-input input:focus { border-color: #1a1a2e; }
+        .ferrolan-chat-input input::placeholder {
+            color: #adb5bd;
+        }
+        .ferrolan-chat-input input:focus { border-color: var(--ferrolan-red); }
         .ferrolan-chat-input button {
             width: 40px; height: 40px;
             border-radius: 50%;
-            background: #1a1a2e;
+            background: var(--ferrolan-red);
             color: white;
             border: none;
             cursor: pointer;
@@ -316,18 +384,31 @@
             transition: background 0.2s;
             flex-shrink: 0;
         }
-        .ferrolan-chat-input button:hover { background: #e94560; }
-        .ferrolan-chat-input button:disabled { background: #ccc; cursor: not-allowed; }
+        .ferrolan-chat-input button:hover { background: var(--ferrolan-red-dark); }
+        .ferrolan-chat-input button:disabled { background: #d1d5db; cursor: not-allowed; }
 
-        /* ── Response time badge ──────────────────────── */
+        /* ── Response time badge ─────────────────────── */
         .response-time {
             font-size: 10px;
-            color: #bbb;
+            color: #adb5bd;
             margin-top: 4px;
             text-align: right;
         }
 
-        /* ── Responsive ───────────────────────────────── */
+        /* ── Powered by ──────────────────────────────── */
+        .powered-by {
+            text-align: center;
+            font-size: 10px;
+            color: #adb5bd;
+            padding: 4px 0 8px;
+            background: var(--ferrolan-white);
+        }
+        .powered-by a {
+            color: var(--ferrolan-red);
+            text-decoration: none;
+        }
+
+        /* ── Responsive ──────────────────────────────── */
         @media (max-width: 480px) {
             .ferrolan-chat-window {
                 bottom: 0; right: 0;
@@ -343,10 +424,10 @@
 
 <!-- ── Demo page content ──────────────────────────────────── -->
 <div style="max-width: 800px; margin: 80px auto; padding: 20px; text-align: center;">
-    <h1 style="color: #1a1a2e;">Ferrolan</h1>
-    <p style="color: #666; margin-top: 8px;">Prueba del widget de chatbot RAG v2.0</p>
-    <p style="color: #999; margin-top: 16px; font-size: 14px;">
-        Haz clic en el boton de chat de la esquina inferior derecha para probar el asistente.
+    <h1 style="color: var(--ferrolan-red);">Ferrolan</h1>
+    <p style="color: #6c757d; margin-top: 8px;">Prueba del widget de chatbot RAG v2.0</p>
+    <p style="color: #adb5bd; margin-top: 16px; font-size: 14px;">
+        Haz clic en el botón de chat de la esquina inferior derecha para probar el asistente.
     </p>
 </div>
 
@@ -365,32 +446,37 @@
         <div class="avatar">F</div>
         <div class="info">
             <h3>Asistente Ferrolan</h3>
-            <p><span class="status-dot"></span>En linea - Materiales de construccion</p>
+            <p><span class="status-dot"></span>En línea · Materiales de construcción</p>
         </div>
+        <button class="close-btn" id="closeChat" aria-label="Cerrar chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Sector chips -->
     <div class="sector-bar" id="sectorBar">
         <button class="sector-chip" data-sector="ceramica" onclick="selectSector(this)">
-            <span class="chip-icon">&#9638;</span>Ceramica
+            <span class="chip-icon">◧</span>Cerámica
         </button>
         <button class="sector-chip" data-sector="griferia" onclick="selectSector(this)">
-            <span class="chip-icon">&#9832;</span>Griferia
+            <span class="chip-icon">☔</span>Grifería
         </button>
         <button class="sector-chip" data-sector="bano" onclick="selectSector(this)">
-            <span class="chip-icon">&#9855;</span>Bano
+            <span class="chip-icon">🚿</span>Baño
         </button>
         <button class="sector-chip" data-sector="parquet" onclick="selectSector(this)">
-            <span class="chip-icon">&#9632;</span>Parquet
+            <span class="chip-icon">▬</span>Parquet
         </button>
         <button class="sector-chip" data-sector="mamparas" onclick="selectSector(this)">
-            <span class="chip-icon">&#9645;</span>Mamparas
+            <span class="chip-icon">▯</span>Mamparas
         </button>
     </div>
 
     <div class="ferrolan-chat-messages" id="chatMessages">
         <div class="message bot">
-            Hola, soy el asistente virtual de <strong>Ferrolan</strong>. Puedo ayudarte con dudas sobre ceramica, azulejos, griferia, parquet, muebles de bano y mucho mas. ¿En que puedo ayudarte?
+            Hola, soy el asistente virtual de <strong>Ferrolan</strong>. Puedo ayudarte con dudas sobre cerámica, azulejos, grifería, parquet, muebles de baño y mucho más. ¿En qué puedo ayudarte?
         </div>
     </div>
 
@@ -405,53 +491,56 @@
             </svg>
         </button>
     </div>
+
+    <div class="powered-by">
+        Asistente inteligente de <a href="https://ferrolan.es" target="_blank">ferrolan.es</a>
+    </div>
 </div>
 
 <script>
-// ── Configuracion ────────────────────────────────────────
-// Cambiar esta URL cuando la API este en produccion (ej: https://rag.ferrolan.es)
+// ── Configuración ────────────────────────────────────────
 const API_URL = window.location.origin;
 
 // ── Sugerencias por sector ──────────────────────────────
 const SECTOR_SUGGESTIONS = {
     default: [
         "Azulejo antideslizante para ducha",
-        "Diferencia porcelanico y pasta blanca",
+        "Diferencia porcelánico y pasta blanca",
         "Primera limpieza de obra",
     ],
     ceramica: [
-        "Azulejos efecto cemento para bano",
-        "Porcelanico 60x120 para salon",
-        "¿Que PEI necesito para una tienda?",
-        "Azulejo imitacion madera exterior",
+        "Azulejos efecto cemento para baño",
+        "Porcelánico 60x120 para salón",
+        "¿Qué PEI necesito para una tienda?",
+        "Azulejo imitación madera exterior",
     ],
     griferia: [
-        "Grifo termostatico para ducha",
+        "Grifo termostático para ducha",
         "Diferencia monomando y bimando",
-        "Griferia empotrada de bano",
+        "Grifería empotrada de baño",
     ],
     bano: [
-        "Mueble de bano suspendido",
+        "Mueble de baño suspendido",
         "Plato de ducha antideslizante",
         "Lavabo sobre encimera",
         "Sanitario suspendido",
     ],
     parquet: [
-        "Diferencia laminado y vinilico",
-        "Suelo vinilico para cocina",
+        "Diferencia laminado y vinílico",
+        "Suelo vinílico para cocina",
         "Parquet resistente al agua",
     ],
     mamparas: [
-        "Mampara corredera para bano pequeno",
+        "Mampara corredera para baño pequeño",
         "Mampara fija de cristal",
-        "Mamparas para banera",
+        "Mamparas para bañera",
     ],
 };
 
 // ── Estado ───────────────────────────────────────────────
 let isOpen = false;
 let isLoading = false;
-let sessionId = null;  // Se asigna con la primera respuesta
+let sessionId = null;
 let currentSector = 'default';
 
 // ── Elementos ────────────────────────────────────────────
@@ -461,6 +550,7 @@ const messages = document.getElementById('chatMessages');
 const input = document.getElementById('chatInput');
 const sendBtn = document.getElementById('chatSend');
 const suggestionsEl = document.getElementById('suggestions');
+const closeBtn = document.getElementById('closeChat');
 
 // Mostrar sugerencias iniciales
 showSuggestions('default');
@@ -471,6 +561,12 @@ toggle.addEventListener('click', () => {
     chatWindow.classList.toggle('open', isOpen);
     toggle.classList.toggle('open', isOpen);
     if (isOpen) input.focus();
+});
+
+closeBtn.addEventListener('click', () => {
+    isOpen = false;
+    chatWindow.classList.remove('open');
+    toggle.classList.remove('open');
 });
 
 // ── Seleccionar sector ──────────────────────────────────
@@ -508,7 +604,7 @@ async function sendMessage(text) {
 
         const response = await fetch(`${API_URL}/api/chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
             body: JSON.stringify(body),
         });
 
@@ -525,7 +621,6 @@ async function sendMessage(text) {
 
         const data = await response.json();
 
-        // Guardar session_id para memoria conversacional
         if (data.session_id) sessionId = data.session_id;
 
         typingEl.remove();
@@ -534,7 +629,7 @@ async function sendMessage(text) {
     } catch (error) {
         typingEl.remove();
         addMessage(
-            'Lo siento, hubo un problema al conectar con el servidor. Por favor, intentalo de nuevo.',
+            'Lo siento, hubo un problema al conectar con el servidor. Por favor, inténtalo de nuevo.',
             'bot'
         );
         console.error('Ferrolan Chat Error:', error);
@@ -557,7 +652,6 @@ function addMessage(text, type) {
 
 // ── Formatear respuesta del bot ─────────────────────────
 function formatAnswer(text) {
-    // Detectar y formatear productos como cards
     const productRegex = /(\d+)\.\s+(.+?)\s*\(Ref:\s*(\w+)\)\s*-\s*([\d.,]+\s*EUR\/m2\s*IVA\s*incl\.)\n\s*URL:\s*(https?:\/\/\S+)/g;
     let hasProducts = false;
     let productsHtml = '';
@@ -576,17 +670,15 @@ function formatAnswer(text) {
         return '';
     });
 
-    // Markdown basico
     let html = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/^- (.+)/gm, '<li>$1</li>')
         .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-        .replace(/\[Fuente:\s*([^\]]+)\]/g, '')  // Las fuentes se muestran aparte
+        .replace(/\[Fuente:\s*([^\]]+)\]/g, '')
         .replace(/\n\n/g, '<br><br>')
         .replace(/\n/g, '<br>');
 
-    // Limpiar lineas vacias de productos eliminados
     html = html.replace(/(<br>){3,}/g, '<br><br>');
     html = html.replace(/---\s*PRODUCTOS DEL CATALOGO.*?---/g, '');
 
@@ -604,7 +696,6 @@ function addBotMessage(data) {
 
     let html = formatAnswer(data.answer);
 
-    // Fuentes
     if (data.sources && data.sources.length > 0) {
         html += '<div class="sources">Fuentes: ';
         data.sources.forEach(s => {
@@ -614,14 +705,12 @@ function addBotMessage(data) {
         html += '</div>';
     }
 
-    // Disclaimer
     if (data.has_unverified) {
-        html += '<div class="disclaimer">* Alguna informacion esta pendiente de revision por nuestro equipo tecnico.</div>';
+        html += '<div class="disclaimer">* Alguna información está pendiente de revisión por nuestro equipo técnico.</div>';
     }
 
-    // Tiempo de respuesta
     if (data.tiempo_total) {
-        html += `<div class="response-time">${data.tiempo_total.toFixed(1)}s${data.cached ? ' (cache)' : ''}</div>`;
+        html += `<div class="response-time">${data.tiempo_total.toFixed(1)}s${data.cached ? ' (caché)' : ''}</div>`;
     }
 
     div.innerHTML = html;
@@ -639,7 +728,7 @@ function showTyping() {
     return div;
 }
 
-// ── Sugerencia rapida ────────────────────────────────────
+// ── Sugerencia rápida ────────────────────────────────────
 function sendSuggestion(btn) {
     sendMessage(btn.textContent);
 }
