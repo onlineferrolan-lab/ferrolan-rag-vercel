@@ -10,6 +10,7 @@ import os
 import re
 import time
 import hashlib
+from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler
 
 import requests as http_requests
@@ -24,6 +25,101 @@ PRESTASHOP_API_KEY = os.environ.get("PRESTASHOP_API_KEY", "")
 
 SHOP_URL = "https://ferrolan.es"
 API_BASE = f"{SHOP_URL}/api"
+
+# ── Memoria conversacional (en memoria, por instancia serverless) ──
+MAX_SESSIONS = 200          # Limitar memoria por instancia
+MAX_HISTORY_TURNS = 5       # Últimos 5 intercambios (user+assistant)
+SESSION_TTL = 1800          # 30 min sin actividad → se borra
+
+class ConversationStore:
+    """Almacén LRU de historiales de conversación con TTL."""
+    def __init__(self, max_size=MAX_SESSIONS):
+        self._store = OrderedDict()
+        self._max_size = max_size
+
+    def get(self, session_id):
+        if session_id in self._store:
+            entry = self._store[session_id]
+            if time.time() - entry["last_active"] > SESSION_TTL:
+                del self._store[session_id]
+                return []
+            self._store.move_to_end(session_id)
+            entry["last_active"] = time.time()
+            return entry["messages"]
+        return []
+
+    def add_turn(self, session_id, user_msg, assistant_msg):
+        if session_id not in self._store:
+            if len(self._store) >= self._max_size:
+                self._store.popitem(last=False)
+            self._store[session_id] = {"messages": [], "last_active": time.time()}
+        entry = self._store[session_id]
+        entry["messages"].append({"role": "user", "content": user_msg})
+        entry["messages"].append({"role": "assistant", "content": assistant_msg})
+        # Mantener solo los últimos N turnos (N*2 mensajes)
+        if len(entry["messages"]) > MAX_HISTORY_TURNS * 2:
+            entry["messages"] = entry["messages"][-(MAX_HISTORY_TURNS * 2):]
+        entry["last_active"] = time.time()
+        self._store.move_to_end(session_id)
+
+conversation_store = ConversationStore()
+
+
+# ── Observabilidad: métricas por instancia ────────────────
+class QueryMetrics:
+    """Registra métricas de cada query para análisis de calidad."""
+    def __init__(self, max_entries=500):
+        self._entries = []
+        self._max = max_entries
+        self._counters = {
+            "total": 0, "off_topic": 0, "no_results": 0,
+            "with_products": 0, "with_unverified": 0,
+            "expanded_queries": 0, "reranked": 0,
+        }
+
+    def log(self, entry):
+        self._counters["total"] += 1
+        if entry.get("off_topic"):
+            self._counters["off_topic"] += 1
+        if entry.get("no_results"):
+            self._counters["no_results"] += 1
+        if entry.get("has_products"):
+            self._counters["with_products"] += 1
+        if entry.get("has_unverified"):
+            self._counters["with_unverified"] += 1
+        if entry.get("query_expanded"):
+            self._counters["expanded_queries"] += 1
+        if entry.get("reranked"):
+            self._counters["reranked"] += 1
+        self._entries.append(entry)
+        if len(self._entries) > self._max:
+            self._entries = self._entries[-self._max:]
+
+    def summary(self):
+        if not self._entries:
+            return {"counters": self._counters, "recent": [], "avg_times": {}}
+        recent = self._entries[-20:]
+        times = [e.get("tiempo_total", 0) for e in self._entries if e.get("tiempo_total")]
+        search_times = [e.get("tiempo_busqueda", 0) for e in self._entries if e.get("tiempo_busqueda")]
+        scores = [e.get("top_score", 0) for e in self._entries if e.get("top_score")]
+        return {
+            "counters": self._counters,
+            "avg_times": {
+                "total": round(sum(times) / len(times), 3) if times else 0,
+                "search": round(sum(search_times) / len(search_times), 3) if search_times else 0,
+            },
+            "avg_top_score": round(sum(scores) / len(scores), 3) if scores else 0,
+            "recent": [{
+                "query": e.get("query", "")[:80],
+                "dominios": e.get("dominios", []),
+                "top_score": e.get("top_score", 0),
+                "tiempo_total": e.get("tiempo_total", 0),
+                "query_expanded": e.get("query_expanded", False),
+                "num_results": e.get("num_results", 0),
+            } for e in recent],
+        }
+
+query_metrics = QueryMetrics()
 
 
 # ── System Prompt ──────────────────────────────────────────
@@ -109,8 +205,65 @@ def is_on_topic(query):
     return False
 
 
-# ── Router ─────────────────────────────────────────────────
-def route_query(query):
+# ── Router semántico ──────────────────────────────────────
+AVAILABLE_DOMAINS = [
+    "productos",      # tipos de cerámica: porcelánico, gres, pasta blanca, mosaico, slab, 20mm
+    "estetica",       # efectos (mármol, piedra, madera, cemento), estilos, tendencias, colores
+    "zonas",          # estancias: baño, cocina, terraza, exterior, piscina, fachada, salón
+    "tecnico",        # PEI, antideslizante, formatos, espesores, rectificado, acabados
+    "colocacion",     # cemento cola, adhesivos, juntas, plots, patrones de colocación
+    "mantenimiento",  # limpieza, manchas, mantenimiento periódico
+    "comercial",      # precios, marcas, pedidos, stock, cálculo de material, devoluciones
+    "problemas",      # fisuras, desprendimientos, eflorescencias, cejas, errores
+    "griferia",       # grifos, monomandos, termostáticos, duchas, rociadores
+    "general",        # tiendas Ferrolan, horarios, direcciones, contacto
+]
+
+DOMAIN_DESCRIPTIONS = "\n".join([
+    f"- {d}" for d in AVAILABLE_DOMAINS
+])
+
+ROUTER_PROMPT = f"""Eres un clasificador de consultas para Ferrolan (tienda de cerámica y grifería).
+Dada una consulta de cliente, clasifícala en 1 a 3 de estos dominios:
+
+{DOMAIN_DESCRIPTIONS}
+
+Reglas:
+- Elige los dominios cuyo contenido sea NECESARIO para responder bien.
+- Si la consulta implica elegir producto para una zona, incluye "zonas" Y "productos".
+- Si implica características técnicas (antideslizante, resistencia, PEI), incluye "tecnico".
+- Si pregunta por tiendas, horarios o contacto, usa "general".
+- Responde SOLO con los nombres de dominio separados por coma, sin explicación."""
+
+
+def route_query_semantic(query):
+    """Clasificación semántica con Haiku — rápido y preciso."""
+    try:
+        client = Anthropic(api_key=ANTHROPIC_API_KEY)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=60,
+            temperature=0,
+            messages=[{"role": "user", "content": f"Consulta: \"{query}\""}],
+            system=ROUTER_PROMPT,
+        )
+        raw = response.content[0].text.strip().lower()
+        # Parsear dominios de la respuesta
+        domains = [d.strip() for d in raw.split(",")]
+        # Filtrar solo dominios válidos
+        valid = [d for d in domains if d in AVAILABLE_DOMAINS]
+        if valid:
+            if "general" not in valid:
+                valid.append("general")
+            return valid[:4]
+    except Exception:
+        pass
+    # Fallback al routing por keywords si falla Haiku
+    return route_query_keywords(query)
+
+
+def route_query_keywords(query):
+    """Fallback: routing por keywords (método original)."""
     query_lower = query.lower()
     rules = {
         "productos": ["porcelanico", "porcelánico", "pasta blanca", "gres", "20mm", "mosaico", "slab", "tipo de azulejo"],
@@ -133,10 +286,46 @@ def route_query(query):
                 break
     if not selected:
         selected = ["productos", "zonas", "tecnico"]
-    # Always include "general" domain (contains DEVO, info tienda, etc.)
     if "general" not in selected:
         selected.append("general")
     return selected[:4]
+
+
+# ── Query Expansion (reformulación con historial) ────────
+def expand_query(query, chat_history):
+    """Reformula una pregunta ambigua usando el historial conversacional.
+    Ejemplo: historial habla de porcelánico para cocina, usuario dice
+    '¿y en formato grande?' → 'porcelánico en formato grande para cocina'
+    """
+    if not chat_history:
+        return query
+
+    # Solo usar los últimos 2 turnos (4 mensajes) para contexto
+    recent = chat_history[-(2 * 2):]
+    history_text = "\n".join([
+        f"{'Cliente' if m['role'] == 'user' else 'Asistente'}: {m['content'][:200]}"
+        for m in recent
+    ])
+
+    try:
+        client = Anthropic(api_key=ANTHROPIC_API_KEY)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=150,
+            temperature=0,
+            system="""Eres un reformulador de consultas para un buscador de cerámica y grifería.
+Dada una conversación previa y una nueva pregunta del cliente, reformula la pregunta para que sea AUTOCONTENIDA (incluya todo el contexto necesario de la conversación).
+Si la pregunta ya es clara y autocontenida, devuélvela tal cual.
+Responde SOLO con la pregunta reformulada, sin explicación.""",
+            messages=[{"role": "user", "content": f"Conversación previa:\n{history_text}\n\nNueva pregunta: \"{query}\""}],
+        )
+        expanded = response.content[0].text.strip()
+        # Sanity check: no devolver algo absurdo
+        if expanded and 3 < len(expanded) < 500:
+            return expanded
+    except Exception:
+        pass
+    return query
 
 
 # ── Embeddings via Pinecone Inference REST API ────────────
@@ -230,6 +419,51 @@ def search_pinecone(embedding, dominios, top_k=8):
 
     results.sort(key=lambda r: -r["score"])
     return results[:top_k]
+
+
+# ── Reranking via Pinecone Inference ─────────────────────
+def rerank_results(query, results, top_n=8):
+    """Reordena resultados usando Pinecone Rerank para mayor precisión."""
+    if not results or len(results) <= 1:
+        return results
+
+    documents = []
+    for r in results:
+        titulo = r["metadata"].get("titulo_documento", "")
+        seccion = r["metadata"].get("seccion", "")
+        text = r.get("text", "")
+        documents.append(f"[{titulo}] ({seccion}) {text}")
+
+    try:
+        response = http_requests.post(
+            "https://api.pinecone.io/rerank",
+            headers={
+                "Api-Key": PINECONE_API_KEY,
+                "Content-Type": "application/json",
+                "X-Pinecone-Api-Version": "2025-10",
+            },
+            json={
+                "model": "bge-reranker-v2-m3",
+                "query": query,
+                "documents": documents,
+                "top_n": min(top_n, len(documents)),
+            },
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return results[:top_n]
+
+        reranked_data = response.json().get("data", [])
+        reranked = []
+        for item in reranked_data:
+            idx = item["index"]
+            r = results[idx].copy()
+            r["rerank_score"] = item["score"]
+            reranked.append(r)
+        return reranked
+
+    except Exception:
+        return results[:top_n]
 
 
 # ── PrestaShop search ──────────────────────────────────────
@@ -479,7 +713,7 @@ def build_context(results, product_context=None):
 
 
 # ── Call Claude ────────────────────────────────────────────
-def call_claude(query, context, sources, has_unverified):
+def call_claude(query, context, sources, has_unverified, chat_history=None):
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
     user_message = f"""Contexto de documentos de Ferrolan:
@@ -492,11 +726,18 @@ Pregunta del cliente: {query}
 
 Responde usando SOLO la informacion del contexto proporcionado. Cita las fuentes al final."""
 
+    # Construir mensajes con historial previo
+    messages = []
+    if chat_history:
+        messages.extend(chat_history)
+    messages.append({"role": "user", "content": user_message})
+
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=1500,
+        max_tokens=2048,
+        temperature=0.1,
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
+        messages=messages,
     )
 
     answer = response.content[0].text
@@ -520,6 +761,7 @@ class handler(BaseHTTPRequestHandler):
                 raw_text = raw_bytes.decode("latin-1")
             body = json.loads(raw_text)
             query = body.get("query", "").strip()
+            session_id = body.get("session_id", "")
 
             if not query or len(query) < 3:
                 self._json_response(400, {"error": "Query must be at least 3 characters"})
@@ -533,6 +775,7 @@ class handler(BaseHTTPRequestHandler):
 
             # Topic guard
             if not is_on_topic(query):
+                query_metrics.log({"query": query, "off_topic": True, "tiempo_total": round(time.time() - t_total, 3)})
                 self._json_response(200, {
                     "answer": OFF_TOPIC_RESPONSE,
                     "sources": [],
@@ -540,20 +783,29 @@ class handler(BaseHTTPRequestHandler):
                     "tiempo_busqueda": 0,
                     "tiempo_total": round(time.time() - t_total, 3),
                     "has_unverified": False,
-                    "session_id": "vercel",
+                    "session_id": session_id or "vercel",
                     "cached": False,
                 })
                 return
 
-            # Route query
-            dominios = route_query(query)
+            # Query expansion: reformular si hay historial conversacional
+            chat_history = conversation_store.get(session_id) if session_id else []
+            search_query = expand_query(query, chat_history) if chat_history else query
 
-            # Get embedding
+            # Route query (semántico con Haiku, fallback a keywords)
+            dominios = route_query_semantic(search_query)
+
+            # Get embedding (con la query expandida para mejor búsqueda)
             t_search = time.time()
-            embedding = get_embedding(query)
+            embedding = get_embedding(search_query)
 
-            # Search Pinecone
-            results = search_pinecone(embedding, dominios)
+            # Search Pinecone (topK=12 para tener más candidatos antes del reranking)
+            results = search_pinecone(embedding, dominios, top_k=12)
+
+            # Reranking: reordena por relevancia real y devuelve top 8
+            if results:
+                results = rerank_results(query, results, top_n=8)
+
             search_time = time.time() - t_search
 
             # Search PrestaShop
@@ -565,6 +817,7 @@ class handler(BaseHTTPRequestHandler):
                     pass
 
             if not results and not product_context:
+                query_metrics.log({"query": query, "no_results": True, "dominios": dominios, "tiempo_busqueda": round(search_time, 3), "tiempo_total": round(time.time() - t_total, 3), "query_expanded": search_query != query})
                 self._json_response(200, {
                     "answer": "Lo siento, no he encontrado informacion relevante sobre eso. Te recomiendo consultarlo con nuestro equipo en tienda.",
                     "sources": [],
@@ -572,14 +825,18 @@ class handler(BaseHTTPRequestHandler):
                     "tiempo_busqueda": round(search_time, 3),
                     "tiempo_total": round(time.time() - t_total, 3),
                     "has_unverified": False,
-                    "session_id": "vercel",
+                    "session_id": session_id or "vercel",
                     "cached": False,
                 })
                 return
 
             # Build context and call LLM
             context, source_names, has_unverified = build_context(results, product_context)
-            answer = call_claude(query, context, source_names, has_unverified)
+            answer = call_claude(query, context, source_names, has_unverified, chat_history)
+
+            # Guardar turno en historial
+            if session_id:
+                conversation_store.add_turn(session_id, query, answer)
 
             # Format sources
             sources_out = []
@@ -595,19 +852,41 @@ class handler(BaseHTTPRequestHandler):
                     })
                     seen_titles.add(titulo)
 
+            total_time = round(time.time() - t_total, 3)
+            top_score = round(results[0]["score"], 3) if results else 0
+
+            # Registrar métricas
+            query_metrics.log({
+                "query": query,
+                "search_query": search_query if search_query != query else None,
+                "query_expanded": search_query != query,
+                "dominios": dominios,
+                "num_results": len(results),
+                "top_score": top_score,
+                "has_products": product_context is not None,
+                "has_unverified": has_unverified,
+                "reranked": bool(results and "rerank_score" in results[0]),
+                "tiempo_busqueda": round(search_time, 3),
+                "tiempo_total": total_time,
+            })
+
             self._json_response(200, {
                 "answer": answer,
                 "sources": sources_out[:5],
                 "dominios_consultados": dominios,
                 "tiempo_busqueda": round(search_time, 3),
-                "tiempo_total": round(time.time() - t_total, 3),
+                "tiempo_total": total_time,
                 "has_unverified": has_unverified,
-                "session_id": "vercel",
+                "session_id": session_id or "vercel",
                 "cached": False,
             })
 
         except Exception as e:
             self._json_response(500, {"error": f"Error interno: {str(e)[:200]}"})
+
+    def do_GET(self):
+        """GET /api/chat → devuelve métricas de observabilidad."""
+        self._json_response(200, query_metrics.summary())
 
     def do_OPTIONS(self):
         self.send_response(200)
