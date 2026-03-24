@@ -132,7 +132,7 @@ REGLAS DE COMPORTAMIENTO:
 2. NUNCA inventes datos tecnicos (PEI, clases antideslizante, medidas, precios). Si no aparecen en el contexto, no los menciones.
 3. Usa un tono profesional pero cercano, como un asesor ceramico experimentado.
 4. Cuando sea relevante, sugiere al cliente visitar la tienda de Ferrolan para ver las piezas en persona o consultar la web ferrolan.es.
-5. Si el cliente pregunta sobre griferia pero no tienes contexto de griferia, indica que estais ampliando esa seccion.
+5. Si el cliente pregunta sobre griferia, responde con la misma profundidad y detalle que con ceramica. Ferrolan trabaja con marcas como Hansgrohe, Grohe, Roca, Tres, Imex, Nobili, Sanycces, Franke, Teka, Presto, Hansa, Galindo, Bruma, Bossini, Ibergrif, Buades, Rovira y GRB.
 6. Cita las fuentes al final de cada respuesta con el formato: [Fuente: titulo del documento]
 7. Si la informacion viene de un documento NO verificado, anade al final: "(Nota: esta informacion esta pendiente de revision por nuestro equipo tecnico)"
 8. Responde siempre en espanol.
@@ -274,7 +274,7 @@ def route_query_keywords(query):
         "mantenimiento": ["limpiar", "limpieza", "mantenimiento", "mancha", "primera limpieza", "oxido"],
         "comercial": ["marca", "precio", "presupuesto", "pedido", "stock", "oferta", "outlet", "devolucion", "devolución", "devolver", "sobra", "sobran", "cajas", "cantidad", "cuantas", "cuántas", "metros", "m2", "desperdicio", "merma", "calculo", "cálculo", "fabrica", "fábrica"],
         "problemas": ["problema", "ceja", "desprendimiento", "fisura", "grieta", "levantado", "eflorescencia"],
-        "griferia": ["grifo", "griferia", "grifería", "monomando", "termostatico", "rociador"],
+        "griferia": ["grifo", "grifos", "griferia", "grifería", "monomando", "termostatico", "termostático", "rociador", "teleducha", "ducha", "bañera", "lavabo", "bidé", "bide", "empotrado", "empotrada", "columna ducha", "recambio", "cartucho", "aireador", "flexo", "barra ducha", "hansgrohe", "grohe", "roca", "tres", "imex", "nobili", "franke", "teka", "presto", "hansa", "galindo", "sanycces", "bruma", "bossini", "ibergrif", "buades", "rovira", "grb", "presion", "presión", "caudal", "antiquemaduras", "sensor", "goteo", "gotea", "cal", "cromado", "mate", "pvd", "fontanero", "instalacion grifo", "instalación grifo"],
         "general": ["tienda", "tiendas", "horario", "horarios", "direccion", "dirección", "contacto", "telefono", "teléfono", "email", "visitar", "parking", "aparcamiento", "exposicion", "exposición", "donde", "dónde", "urgell", "eixample", "santa coloma", "rubi", "rubí", "badalona", "clot", "meridiana", "outlet fondo", "outlet central", "sede", "ferrolan"],
     }
     selected = []
